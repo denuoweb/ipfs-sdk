@@ -20,6 +20,14 @@ type GatewayWebsiteResponse = internalclient.GatewayWebsiteResponse
 type GatewayWebsiteStatusResponse = internalclient.GatewayWebsiteStatusResponse
 type SSLStatusUpdateRequest = internalclient.SSLStatusUpdateRequest
 type WebsiteConfigResponse = internalclient.WebsiteConfigResponse
+type HNSDomainRequest = internalclient.HNSDomainRequest
+type HNSDomainResponse = internalclient.HNSDomainResponse
+type HNSDomainItem = internalclient.HNSDomainItem
+type HNSDomainItemResponse = internalclient.HNSDomainItemResponse
+type HNSWalletBundle = internalclient.HNSWalletBundle
+type HNSWalletRecord = internalclient.HNSWalletRecord
+type HNSManagedRecord = internalclient.HNSManagedRecord
+type HNSGatewayRoute = internalclient.HNSGatewayRoute
 
 type WebsiteValidationReason string
 
@@ -83,6 +91,8 @@ type WebsitesClientWithResponsesInterface interface {
 	PostApiWebsitesWithResponse(ctx context.Context, body internalclient.WebsiteRequest, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PostApiWebsitesResponse, error)
 	PutApiWebsitesIdWithResponse(ctx context.Context, id string, body internalclient.WebsiteUpdateRequest, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PutApiWebsitesIdResponse, error)
 	DeleteApiWebsitesIdWithResponse(ctx context.Context, id string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.DeleteApiWebsitesIdResponse, error)
+	GetApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.GetApiWebsitesIdHnsDomainsResponse, error)
+	PostApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, body internalclient.HNSDomainRequest, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PostApiWebsitesIdHnsDomainsResponse, error)
 	GetApiWebsitesDomainSslStatusWithResponse(ctx context.Context, domain string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.GetApiWebsitesDomainSslStatusResponse, error)
 	PostApiWebsitesIdValidateWithResponse(ctx context.Context, id string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PostApiWebsitesIdValidateResponse, error)
 	PostInternalWebsitesDomainSslStatusWithResponse(ctx context.Context, domain string, body internalclient.SSLStatusUpdateRequest, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PostInternalWebsitesDomainSslStatusResponse, error)
@@ -114,6 +124,14 @@ func (a *internalClientToWebsitesAdapter) PutApiWebsitesIdWithResponse(ctx conte
 
 func (a *internalClientToWebsitesAdapter) DeleteApiWebsitesIdWithResponse(ctx context.Context, id string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.DeleteApiWebsitesIdResponse, error) {
 	return a.client.DeleteApiWebsitesIdWithResponse(ctx, id, reqEditors...)
+}
+
+func (a *internalClientToWebsitesAdapter) GetApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.GetApiWebsitesIdHnsDomainsResponse, error) {
+	return a.client.GetApiWebsitesIdHnsDomainsWithResponse(ctx, id, reqEditors...)
+}
+
+func (a *internalClientToWebsitesAdapter) PostApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, body internalclient.HNSDomainRequest, reqEditors ...internalclient.RequestEditorFn) (*internalclient.PostApiWebsitesIdHnsDomainsResponse, error) {
+	return a.client.PostApiWebsitesIdHnsDomainsWithResponse(ctx, id, body, reqEditors...)
 }
 
 func (a *internalClientToWebsitesAdapter) GetApiWebsitesDomainSslStatusWithResponse(ctx context.Context, domain string, reqEditors ...internalclient.RequestEditorFn) (*internalclient.GetApiWebsitesDomainSslStatusResponse, error) {
@@ -156,6 +174,9 @@ type WebsitesService interface {
 	Update(ctx context.Context, id string, domain string, targetHash string, targetType string) (*WebsiteResponse, error)
 	UpdateWithOptions(ctx context.Context, id string, req WebsiteUpdateRequest) (*WebsiteResponse, error)
 	Delete(ctx context.Context, id string) error
+	ListHNSDomains(ctx context.Context, id string) ([]HNSDomainItem, error)
+	CreateHNSDomain(ctx context.Context, id string, domain string) (*HNSDomainResponse, error)
+	CreateHNSDomainWithOptions(ctx context.Context, id string, req HNSDomainRequest) (*HNSDomainResponse, error)
 
 	// DNS validation
 	ValidateDNS(ctx context.Context, id string) (*WebsiteValidateResponse, error)
@@ -263,9 +284,9 @@ func (s *websitesService) Get(ctx context.Context, id string) (*WebsiteResponse,
 // Create creates a new website
 func (s *websitesService) Create(ctx context.Context, domain string, targetHash string, targetType string) (*WebsiteResponse, error) {
 	return s.CreateWithOptions(ctx, WebsiteRequest{
-		Domain:      domain,
-		TargetHash:  targetHash,
-		TargetType:  targetType,
+		Domain:     domain,
+		TargetHash: targetHash,
+		TargetType: targetType,
 	})
 }
 
@@ -345,6 +366,68 @@ func (s *websitesService) Delete(ctx context.Context, id string) error {
 
 		return nil
 	})
+}
+
+// ListHNSDomains lists HNS/DANE bundles generated for a website.
+func (s *websitesService) ListHNSDomains(ctx context.Context, id string) ([]HNSDomainItem, error) {
+	var result []HNSDomainItem
+
+	err := httputil.RetryContext(ctx, s.config.Retry, func() error {
+		resp, err := s.client.GetApiWebsitesIdHnsDomainsWithResponse(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		if err := handleResponse(resp.StatusCode(), resp.Body, OpListHNSDomains, []int{http.StatusOK}); err != nil {
+			return err
+		}
+
+		if resp.JSON200 == nil {
+			result = []HNSDomainItem{}
+			return nil
+		}
+
+		result = resp.JSON200.Data
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// CreateHNSDomain generates an HNS/DANE deployment bundle for a website.
+func (s *websitesService) CreateHNSDomain(ctx context.Context, id string, domain string) (*HNSDomainResponse, error) {
+	return s.CreateHNSDomainWithOptions(ctx, id, HNSDomainRequest{Domain: domain})
+}
+
+// CreateHNSDomainWithOptions generates an HNS/DANE deployment bundle with full request options.
+func (s *websitesService) CreateHNSDomainWithOptions(ctx context.Context, id string, req HNSDomainRequest) (*HNSDomainResponse, error) {
+	var result *HNSDomainResponse
+
+	err := httputil.RetryContext(ctx, s.config.Retry, func() error {
+		resp, err := s.client.PostApiWebsitesIdHnsDomainsWithResponse(ctx, id, req)
+		if err != nil {
+			return err
+		}
+
+		if err := handleResponse(resp.StatusCode(), resp.Body, OpCreateHNSDomain, []int{http.StatusCreated}); err != nil {
+			return err
+		}
+
+		if resp.JSON201 == nil {
+			return ErrBadRequest(opsString(OpCreateHNSDomain) + " no response data for website " + id)
+		}
+
+		result = resp.JSON201
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // GetSSLStatus retrieves SSL certificate status for a domain
@@ -489,12 +572,12 @@ func (s *websitesService) WaitForSSLStatusReady(ctx context.Context, domain stri
 		if err != nil {
 			return "", err
 		}
-		
+
 		// Check if SSL status exists
 		if resp.Ssl == nil {
 			return "", nil
 		}
-		
+
 		return resp.Ssl.Status, nil
 	}, settledStates, opts...)
 
@@ -597,4 +680,3 @@ func (s *websitesService) GetConfig(ctx context.Context) (*WebsiteConfigResponse
 
 	return result, nil
 }
-

@@ -49,6 +49,8 @@ const (
 	OpGetGatewayWebsite
 	OpGetGatewayWebsiteStatus
 	OpGetWebsiteConfig
+	OpListHNSDomains
+	OpCreateHNSDomain
 
 	// Pinning operations
 	OpListPins
@@ -87,17 +89,19 @@ var operationString = map[int]string{
 	OpResolveIPNS:   "resolve IPNS name",
 
 	// Websites operations
-	OpListWebsites:    "list websites",
-	OpGetWebsite:      "get website",
-	OpCreateWebsite:   "create website",
-	OpUpdateWebsite:   "update website",
-	OpDeleteWebsite:   "delete website",
-	OpValidateWebsite:          "validate website",
-	OpGetSSLStatus:             "get SSL status",
-	OpUpdateSSLStatusInternal:  "update SSL status internal",
-	OpGetGatewayWebsite:        "get gateway website",
-	OpGetGatewayWebsiteStatus:  "get gateway website status",
-	OpGetWebsiteConfig:          "get website config",
+	OpListWebsites:            "list websites",
+	OpGetWebsite:              "get website",
+	OpCreateWebsite:           "create website",
+	OpUpdateWebsite:           "update website",
+	OpDeleteWebsite:           "delete website",
+	OpValidateWebsite:         "validate website",
+	OpGetSSLStatus:            "get SSL status",
+	OpUpdateSSLStatusInternal: "update SSL status internal",
+	OpGetGatewayWebsite:       "get gateway website",
+	OpGetGatewayWebsiteStatus: "get gateway website status",
+	OpGetWebsiteConfig:        "get website config",
+	OpListHNSDomains:          "list HNS domains",
+	OpCreateHNSDomain:         "create HNS domain",
 
 	// Pinning operations
 	OpListPins:  "list pins",
@@ -303,6 +307,15 @@ var httpErrorMessages = map[int]map[int]errorFactory{
 	OpGetWebsiteConfig: {
 		http.StatusUnauthorized: authErr("authentication required"),
 		http.StatusNotFound:     notFoundErr("website config not found"),
+	},
+	OpListHNSDomains: {
+		http.StatusUnauthorized: authErr("authentication required"),
+		http.StatusNotFound:     notFoundErr("website not found"),
+	},
+	OpCreateHNSDomain: {
+		http.StatusUnauthorized: authErr("authentication required"),
+		http.StatusBadRequest:   plainErr("invalid HNS domain data"),
+		http.StatusNotFound:     notFoundErr("website not found"),
 	},
 	OpGetGatewayWebsite: {
 		http.StatusUnauthorized: authErr("authentication required"),
