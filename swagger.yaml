@@ -158,6 +158,146 @@ components:
       - status
       - is_broken
       type: object
+    HNSDomainRequest:
+      additionalProperties: false
+      properties:
+        domain:
+          type: string
+        mode:
+          enum:
+          - dane
+          type: string
+      required:
+      - domain
+      type: object
+    HNSWalletRecord:
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        ns:
+          type: string
+        address:
+          type: string
+        keyTag:
+          type: integer
+        algorithm:
+          type: integer
+        digestType:
+          type: integer
+        digest:
+          type: string
+      required:
+      - type
+      type: object
+    HNSWalletBundle:
+      additionalProperties: false
+      properties:
+        records:
+          items:
+            $ref: '#/components/schemas/HNSWalletRecord'
+          type: array
+      required:
+      - records
+      type: object
+    HNSManagedRecord:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        value:
+          type: string
+      required:
+      - name
+      - type
+      - value
+      type: object
+    HNSGatewayRoute:
+      additionalProperties: false
+      properties:
+        host:
+          type: string
+        target:
+          type: string
+      required:
+      - host
+      - target
+      type: object
+    HNSDomainResponse:
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        website_id:
+          type: integer
+        domain:
+          type: string
+        domain_type:
+          type: string
+        hns_mode:
+          type: string
+        zone:
+          type: string
+        zone_id:
+          type: integer
+        cid:
+          type: string
+        status:
+          type: string
+        customer_publish_from_hns_wallet:
+          $ref: '#/components/schemas/HNSWalletBundle'
+        pinner_managed_records:
+          items:
+            $ref: '#/components/schemas/HNSManagedRecord'
+          type: array
+        dnssec_ds:
+          type: string
+        tlsa_record:
+          type: string
+        gateway_route:
+          $ref: '#/components/schemas/HNSGatewayRoute'
+        gateway_route_status:
+          type: string
+        created:
+          format: date-time
+          type: string
+        updated:
+          format: date-time
+          type: string
+      required:
+      - id
+      - website_id
+      - domain
+      - domain_type
+      - hns_mode
+      - zone
+      - cid
+      - status
+      - customer_publish_from_hns_wallet
+      - pinner_managed_records
+      - gateway_route
+      - gateway_route_status
+      - created
+      - updated
+      type: object
+    HNSDomainItem:
+      allOf:
+      - $ref: '#/components/schemas/HNSDomainResponse'
+    HNSDomainItemResponse:
+      additionalProperties: false
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/HNSDomainItem'
+          type: array
+        total:
+          type: integer
+      required:
+      - data
+      - total
+      type: object
     GetBlockMetaBatchRequest:
       additionalProperties: false
       properties:
@@ -3501,6 +3641,112 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Internal server error
       summary: Update website
+      tags:
+      - Websites
+  /api/websites/{id}/hns-domains:
+    get:
+      description: Lists HNS/DANE domain bundles generated for a website.
+      parameters:
+      - description: Website ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HNSDomainItemResponse'
+          description: HNS domain list
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Internal server error
+      summary: List HNS domains
+      tags:
+      - Websites
+    post:
+      description: Generates a customer-published HNS wallet bundle plus Pinner-managed DNSLink, DNSSEC, DANE TLSA, and gateway-route records for a website. This does not publish Handshake transactions or mark the HNS name verified.
+      parameters:
+      - description: Website ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HNSDomainRequest'
+        description: HNS domain request
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HNSDomainResponse'
+          description: HNS domain bundle created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Internal server error
+      summary: Create HNS domain bundle
       tags:
       - Websites
   /api/websites/{id}/validate:
