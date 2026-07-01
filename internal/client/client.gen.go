@@ -119,6 +119,71 @@ type GatewayWebsiteStatusResponse struct {
 	Status      string  `json:"status"`
 }
 
+// HNSDomainRequest defines model for HNSDomainRequest.
+type HNSDomainRequest struct {
+	Domain string  `json:"domain"`
+	Mode   *string `json:"mode,omitempty"`
+}
+
+// HNSGatewayRoute defines model for HNSGatewayRoute.
+type HNSGatewayRoute struct {
+	Host   string `json:"host"`
+	Target string `json:"target"`
+}
+
+// HNSManagedRecord defines model for HNSManagedRecord.
+type HNSManagedRecord struct {
+	Name  string `json:"name"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+// HNSWalletBundle defines model for HNSWalletBundle.
+type HNSWalletBundle struct {
+	Records []HNSWalletRecord `json:"records"`
+}
+
+// HNSWalletRecord defines model for HNSWalletRecord.
+type HNSWalletRecord struct {
+	Address    *string `json:"address,omitempty"`
+	Algorithm  *int    `json:"algorithm,omitempty"`
+	Digest     *string `json:"digest,omitempty"`
+	DigestType *int    `json:"digestType,omitempty"`
+	KeyTag     *int    `json:"keyTag,omitempty"`
+	Ns         *string `json:"ns,omitempty"`
+	Type       string  `json:"type"`
+}
+
+// HNSDomainResponse defines model for HNSDomainResponse.
+type HNSDomainResponse struct {
+	Cid                          string             `json:"cid"`
+	Created                      time.Time          `json:"created"`
+	CustomerPublishFromHNSWallet HNSWalletBundle    `json:"customer_publish_from_hns_wallet"`
+	DnssecDs                     *string            `json:"dnssec_ds,omitempty"`
+	Domain                       string             `json:"domain"`
+	DomainType                   string             `json:"domain_type"`
+	GatewayRoute                 HNSGatewayRoute    `json:"gateway_route"`
+	GatewayRouteStatus           string             `json:"gateway_route_status"`
+	HnsMode                      string             `json:"hns_mode"`
+	Id                           int                `json:"id"`
+	PinnerManagedRecords         []HNSManagedRecord `json:"pinner_managed_records"`
+	Status                       string             `json:"status"`
+	TlsaRecord                   *string            `json:"tlsa_record,omitempty"`
+	Updated                      time.Time          `json:"updated"`
+	WebsiteId                    int                `json:"website_id"`
+	Zone                         string             `json:"zone"`
+	ZoneId                       *int               `json:"zone_id,omitempty"`
+}
+
+// HNSDomainItem defines model for HNSDomainItem.
+type HNSDomainItem = HNSDomainResponse
+
+// HNSDomainItemResponse defines model for HNSDomainItemResponse.
+type HNSDomainItemResponse struct {
+	Data  []HNSDomainItem `json:"data"`
+	Total int             `json:"total"`
+}
+
 // GetBlockMetaBatchRequest defines model for GetBlockMetaBatchRequest.
 type GetBlockMetaBatchRequest struct {
 	Cid []string `json:"cid"`
@@ -543,6 +608,9 @@ type PostApiWebsitesJSONRequestBody = WebsiteRequest
 // PutApiWebsitesIdJSONRequestBody defines body for PutApiWebsitesId for application/json ContentType.
 type PutApiWebsitesIdJSONRequestBody = WebsiteUpdateRequest
 
+// PostApiWebsitesIdHnsDomainsJSONRequestBody defines body for PostApiWebsitesIdHnsDomains for application/json ContentType.
+type PostApiWebsitesIdHnsDomainsJSONRequestBody = HNSDomainRequest
+
 // PostInternalWebsitesDomainSslStatusJSONRequestBody defines body for PostInternalWebsitesDomainSslStatus for application/json ContentType.
 type PostInternalWebsitesDomainSslStatusJSONRequestBody = SSLStatusUpdateRequest
 
@@ -772,6 +840,14 @@ type ClientInterface interface {
 	PutApiWebsitesIdWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PutApiWebsitesId(ctx context.Context, id string, body PutApiWebsitesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetApiWebsitesIdHnsDomains request
+	GetApiWebsitesIdHnsDomains(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostApiWebsitesIdHnsDomainsWithBody request with any body
+	PostApiWebsitesIdHnsDomainsWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostApiWebsitesIdHnsDomains(ctx context.Context, id string, body PostApiWebsitesIdHnsDomainsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostApiWebsitesIdValidate request
 	PostApiWebsitesIdValidate(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1457,6 +1533,42 @@ func (c *Client) PutApiWebsitesIdWithBody(ctx context.Context, id string, conten
 
 func (c *Client) PutApiWebsitesId(ctx context.Context, id string, body PutApiWebsitesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutApiWebsitesIdRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetApiWebsitesIdHnsDomains(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetApiWebsitesIdHnsDomainsRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostApiWebsitesIdHnsDomainsWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostApiWebsitesIdHnsDomainsRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostApiWebsitesIdHnsDomains(ctx context.Context, id string, body PostApiWebsitesIdHnsDomainsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostApiWebsitesIdHnsDomainsRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3392,6 +3504,87 @@ func NewPutApiWebsitesIdRequestWithBody(server string, id string, contentType st
 	return req, nil
 }
 
+// NewGetApiWebsitesIdHnsDomainsRequest generates requests for GetApiWebsitesIdHnsDomains
+func NewGetApiWebsitesIdHnsDomainsRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/websites/%s/hns-domains", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostApiWebsitesIdHnsDomainsRequest calls the generic PostApiWebsitesIdHnsDomains builder with application/json body
+func NewPostApiWebsitesIdHnsDomainsRequest(server string, id string, body PostApiWebsitesIdHnsDomainsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostApiWebsitesIdHnsDomainsRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewPostApiWebsitesIdHnsDomainsRequestWithBody generates requests for PostApiWebsitesIdHnsDomains with any type of body
+func NewPostApiWebsitesIdHnsDomainsRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/websites/%s/hns-domains", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewPostApiWebsitesIdValidateRequest generates requests for PostApiWebsitesIdValidate
 func NewPostApiWebsitesIdValidateRequest(server string, id string) (*http.Request, error) {
 	var err error
@@ -4305,6 +4498,14 @@ type ClientWithResponsesInterface interface {
 	PutApiWebsitesIdWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutApiWebsitesIdResponse, error)
 
 	PutApiWebsitesIdWithResponse(ctx context.Context, id string, body PutApiWebsitesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutApiWebsitesIdResponse, error)
+
+	// GetApiWebsitesIdHnsDomainsWithResponse request
+	GetApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetApiWebsitesIdHnsDomainsResponse, error)
+
+	// PostApiWebsitesIdHnsDomainsWithBodyWithResponse request with any body
+	PostApiWebsitesIdHnsDomainsWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostApiWebsitesIdHnsDomainsResponse, error)
+
+	PostApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, body PostApiWebsitesIdHnsDomainsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostApiWebsitesIdHnsDomainsResponse, error)
 
 	// PostApiWebsitesIdValidateWithResponse request
 	PostApiWebsitesIdValidateWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*PostApiWebsitesIdValidateResponse, error)
@@ -5483,6 +5684,60 @@ func (r PutApiWebsitesIdResponse) StatusCode() int {
 	return 0
 }
 
+type GetApiWebsitesIdHnsDomainsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *HNSDomainItemResponse
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetApiWebsitesIdHnsDomainsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetApiWebsitesIdHnsDomainsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostApiWebsitesIdHnsDomainsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *HNSDomainResponse
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PostApiWebsitesIdHnsDomainsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostApiWebsitesIdHnsDomainsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type PostApiWebsitesIdValidateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -6409,6 +6664,32 @@ func (c *ClientWithResponses) PutApiWebsitesIdWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsePutApiWebsitesIdResponse(rsp)
+}
+
+// GetApiWebsitesIdHnsDomainsWithResponse request returning *GetApiWebsitesIdHnsDomainsResponse
+func (c *ClientWithResponses) GetApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetApiWebsitesIdHnsDomainsResponse, error) {
+	rsp, err := c.GetApiWebsitesIdHnsDomains(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetApiWebsitesIdHnsDomainsResponse(rsp)
+}
+
+// PostApiWebsitesIdHnsDomainsWithBodyWithResponse request with arbitrary body returning *PostApiWebsitesIdHnsDomainsResponse
+func (c *ClientWithResponses) PostApiWebsitesIdHnsDomainsWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostApiWebsitesIdHnsDomainsResponse, error) {
+	rsp, err := c.PostApiWebsitesIdHnsDomainsWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostApiWebsitesIdHnsDomainsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, body PostApiWebsitesIdHnsDomainsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostApiWebsitesIdHnsDomainsResponse, error) {
+	rsp, err := c.PostApiWebsitesIdHnsDomains(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostApiWebsitesIdHnsDomainsResponse(rsp)
 }
 
 // PostApiWebsitesIdValidateWithResponse request returning *PostApiWebsitesIdValidateResponse
@@ -9004,6 +9285,128 @@ func ParsePutApiWebsitesIdResponse(rsp *http.Response) (*PutApiWebsitesIdRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetApiWebsitesIdHnsDomainsResponse parses an HTTP response from a GetApiWebsitesIdHnsDomainsWithResponse call
+func ParseGetApiWebsitesIdHnsDomainsResponse(rsp *http.Response) (*GetApiWebsitesIdHnsDomainsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetApiWebsitesIdHnsDomainsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HNSDomainItemResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostApiWebsitesIdHnsDomainsResponse parses an HTTP response from a PostApiWebsitesIdHnsDomainsWithResponse call
+func ParsePostApiWebsitesIdHnsDomainsResponse(rsp *http.Response) (*PostApiWebsitesIdHnsDomainsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostApiWebsitesIdHnsDomainsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest HNSDomainResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest ErrorResponse
