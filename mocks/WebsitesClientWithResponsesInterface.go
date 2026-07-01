@@ -318,6 +318,80 @@ func (_c *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdWithResponse_
 	return _c
 }
 
+// GetApiWebsitesIdHnsDomainsWithResponse provides a mock function with given fields: ctx, id, reqEditors
+func (_m *MockWebsitesClientWithResponsesInterface) GetApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, reqEditors ...client.RequestEditorFn) (*client.GetApiWebsitesIdHnsDomainsResponse, error) {
+	_va := make([]interface{}, len(reqEditors))
+	for _i := range reqEditors {
+		_va[_i] = reqEditors[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, id)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetApiWebsitesIdHnsDomainsWithResponse")
+	}
+
+	var r0 *client.GetApiWebsitesIdHnsDomainsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...client.RequestEditorFn) (*client.GetApiWebsitesIdHnsDomainsResponse, error)); ok {
+		return rf(ctx, id, reqEditors...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...client.RequestEditorFn) *client.GetApiWebsitesIdHnsDomainsResponse); ok {
+		r0 = rf(ctx, id, reqEditors...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.GetApiWebsitesIdHnsDomainsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...client.RequestEditorFn) error); ok {
+		r1 = rf(ctx, id, reqEditors...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetApiWebsitesIdHnsDomainsWithResponse'
+type MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call struct {
+	*mock.Call
+}
+
+// GetApiWebsitesIdHnsDomainsWithResponse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - reqEditors ...client.RequestEditorFn
+func (_e *MockWebsitesClientWithResponsesInterface_Expecter) GetApiWebsitesIdHnsDomainsWithResponse(ctx interface{}, id interface{}, reqEditors ...interface{}) *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call {
+	return &MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call{Call: _e.mock.On("GetApiWebsitesIdHnsDomainsWithResponse",
+		append([]interface{}{ctx, id}, reqEditors...)...)}
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call) Run(run func(ctx context.Context, id string, reqEditors ...client.RequestEditorFn)) *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]client.RequestEditorFn, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(client.RequestEditorFn)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call) Return(_a0 *client.GetApiWebsitesIdHnsDomainsResponse, _a1 error) *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call) RunAndReturn(run func(context.Context, string, ...client.RequestEditorFn) (*client.GetApiWebsitesIdHnsDomainsResponse, error)) *MockWebsitesClientWithResponsesInterface_GetApiWebsitesIdHnsDomainsWithResponse_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetApiWebsitesWithResponse provides a mock function with given fields: ctx, reqEditors
 func (_m *MockWebsitesClientWithResponsesInterface) GetApiWebsitesWithResponse(ctx context.Context, reqEditors ...client.RequestEditorFn) (*client.GetApiWebsitesResponse, error) {
 	_va := make([]interface{}, len(reqEditors))
@@ -683,6 +757,81 @@ func (_c *MockWebsitesClientWithResponsesInterface_PostApiWebsitesWithResponse_C
 }
 
 func (_c *MockWebsitesClientWithResponsesInterface_PostApiWebsitesWithResponse_Call) RunAndReturn(run func(context.Context, client.WebsiteRequest, ...client.RequestEditorFn) (*client.PostApiWebsitesResponse, error)) *MockWebsitesClientWithResponsesInterface_PostApiWebsitesWithResponse_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PostApiWebsitesIdHnsDomainsWithResponse provides a mock function with given fields: ctx, id, body, reqEditors
+func (_m *MockWebsitesClientWithResponsesInterface) PostApiWebsitesIdHnsDomainsWithResponse(ctx context.Context, id string, body client.HNSDomainRequest, reqEditors ...client.RequestEditorFn) (*client.PostApiWebsitesIdHnsDomainsResponse, error) {
+	_va := make([]interface{}, len(reqEditors))
+	for _i := range reqEditors {
+		_va[_i] = reqEditors[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, id, body)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PostApiWebsitesIdHnsDomainsWithResponse")
+	}
+
+	var r0 *client.PostApiWebsitesIdHnsDomainsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, client.HNSDomainRequest, ...client.RequestEditorFn) (*client.PostApiWebsitesIdHnsDomainsResponse, error)); ok {
+		return rf(ctx, id, body, reqEditors...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, client.HNSDomainRequest, ...client.RequestEditorFn) *client.PostApiWebsitesIdHnsDomainsResponse); ok {
+		r0 = rf(ctx, id, body, reqEditors...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.PostApiWebsitesIdHnsDomainsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, client.HNSDomainRequest, ...client.RequestEditorFn) error); ok {
+		r1 = rf(ctx, id, body, reqEditors...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PostApiWebsitesIdHnsDomainsWithResponse'
+type MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call struct {
+	*mock.Call
+}
+
+// PostApiWebsitesIdHnsDomainsWithResponse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - body client.HNSDomainRequest
+//   - reqEditors ...client.RequestEditorFn
+func (_e *MockWebsitesClientWithResponsesInterface_Expecter) PostApiWebsitesIdHnsDomainsWithResponse(ctx interface{}, id interface{}, body interface{}, reqEditors ...interface{}) *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call {
+	return &MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call{Call: _e.mock.On("PostApiWebsitesIdHnsDomainsWithResponse",
+		append([]interface{}{ctx, id, body}, reqEditors...)...)}
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call) Run(run func(ctx context.Context, id string, body client.HNSDomainRequest, reqEditors ...client.RequestEditorFn)) *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]client.RequestEditorFn, len(args)-3)
+		for i, a := range args[3:] {
+			if a != nil {
+				variadicArgs[i] = a.(client.RequestEditorFn)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(client.HNSDomainRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call) Return(_a0 *client.PostApiWebsitesIdHnsDomainsResponse, _a1 error) *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call) RunAndReturn(run func(context.Context, string, client.HNSDomainRequest, ...client.RequestEditorFn) (*client.PostApiWebsitesIdHnsDomainsResponse, error)) *MockWebsitesClientWithResponsesInterface_PostApiWebsitesIdHnsDomainsWithResponse_Call {
 	_c.Call.Return(run)
 	return _c
 }

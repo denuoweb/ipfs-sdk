@@ -2,6 +2,7 @@ package ipfs
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"testing"
@@ -18,6 +19,14 @@ func getTestToken() string {
 		return token
 	}
 	return "test-token" // fallback for local testing
+}
+
+func stringPtr(v string) *string {
+	return &v
+}
+
+func intPtr(v int) *int {
+	return &v
 }
 
 func TestWebsitesClient_List_Success(t *testing.T) {
@@ -66,7 +75,7 @@ func TestWebsitesClient_List_Unauthorized(t *testing.T) {
 
 	client, err := NewClient(server.URL, "invalid-token")
 	require.NoError(t, err, "NewClient should succeed with any URL")
-	
+
 	result, err := client.Websites().List(context.Background())
 
 	require.Error(t, err)
@@ -133,6 +142,100 @@ func TestWebsitesClient_Create_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, expectedWebsite.Id, result.Id)
+}
+
+func TestWebsitesClient_CreateHNSDomain_Success(t *testing.T) {
+	expected := internalclient.HNSDomainResponse{
+		Id:         1,
+		WebsiteId:  1,
+		Domain:     "example/",
+		DomainType: "hns",
+		HnsMode:    "dane",
+		Zone:       "example.",
+		Cid:        "bafytest",
+		Status:     "records_generated",
+		CustomerPublishFromHNSWallet: internalclient.HNSWalletBundle{
+			Records: []internalclient.HNSWalletRecord{
+				{Type: "NS", Ns: stringPtr("ns1.example.")},
+				{Type: "DS", KeyTag: intPtr(12345), Algorithm: intPtr(13), DigestType: intPtr(2), Digest: stringPtr("ABCD")},
+			},
+		},
+		PinnerManagedRecords: []internalclient.HNSManagedRecord{
+			{Name: "_dnslink.example.", Type: "TXT", Value: "dnslink=/ipfs/bafytest"},
+			{Name: "_443._tcp.example.", Type: "TLSA", Value: "3 1 1 abc"},
+		},
+		GatewayRoute:       internalclient.HNSGatewayRoute{Host: "example", Target: "ipfs://bafytest"},
+		GatewayRouteStatus: "ready",
+	}
+
+	server := testutil.NewTestServer(t, testutil.HTTPTestServerConfig{
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			testutil.VerifyMethod(t, r, http.MethodPost)
+			testutil.VerifyPath(t, r, "/api/websites/1/hns-domains")
+			testutil.VerifyAuthorization(t, r, getTestToken())
+
+			var req internalclient.HNSDomainRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			require.Equal(t, "example", req.Domain)
+			require.Nil(t, req.Mode)
+
+			testutil.NewJSONResponse().
+				WithStatus(http.StatusCreated).
+				WithBody(expected).
+				Write(t, w)
+		},
+	})
+	defer server.Close()
+
+	client, err := NewClient(server.URL, getTestToken())
+	require.NoError(t, err)
+	result, err := client.Websites().CreateHNSDomain(context.Background(), "1", "example")
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, expected.Domain, result.Domain)
+	require.Equal(t, "records_generated", result.Status)
+	require.Len(t, result.CustomerPublishFromHNSWallet.Records, 2)
+	require.Len(t, result.PinnerManagedRecords, 2)
+}
+
+func TestWebsitesClient_ListHNSDomains_Success(t *testing.T) {
+	expected := internalclient.HNSDomainItem{
+		Id:                           1,
+		WebsiteId:                    1,
+		Domain:                       "example/",
+		DomainType:                   "hns",
+		HnsMode:                      "dane",
+		Zone:                         "example.",
+		Cid:                          "bafytest",
+		Status:                       "records_generated",
+		CustomerPublishFromHNSWallet: internalclient.HNSWalletBundle{Records: []internalclient.HNSWalletRecord{{Type: "NS", Ns: stringPtr("ns1.example.")}}},
+		PinnerManagedRecords:         []internalclient.HNSManagedRecord{{Name: "_dnslink.example.", Type: "TXT", Value: "dnslink=/ipfs/bafytest"}},
+		GatewayRoute:                 internalclient.HNSGatewayRoute{Host: "example", Target: "ipfs://bafytest"},
+		GatewayRouteStatus:           "ready",
+	}
+
+	server := testutil.NewTestServer(t, testutil.HTTPTestServerConfig{
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			testutil.VerifyMethod(t, r, http.MethodGet)
+			testutil.VerifyPath(t, r, "/api/websites/1/hns-domains")
+
+			testutil.NewJSONResponse().
+				WithStatus(http.StatusOK).
+				WithBody(internalclient.HNSDomainItemResponse{Data: []internalclient.HNSDomainItem{expected}, Total: 1}).
+				Write(t, w)
+		},
+	})
+	defer server.Close()
+
+	client, err := NewClient(server.URL, getTestToken())
+	require.NoError(t, err)
+	result, err := client.Websites().ListHNSDomains(context.Background(), "1")
+
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	require.Equal(t, expected.Domain, result[0].Domain)
+	require.Equal(t, expected.GatewayRoute.Host, result[0].GatewayRoute.Host)
 }
 
 func TestWebsitesClient_Update_Success(t *testing.T) {
@@ -420,7 +523,6 @@ func TestWebsitesClient_GetGatewayWebsite_Success(t *testing.T) {
 	require.Equal(t, "active", website.Status)
 }
 
-
 func TestWebsitesClient_GetGatewayWebsiteStatus_Success(t *testing.T) {
 	server := testutil.NewTestServer(t, testutil.HTTPTestServerConfig{
 		Handler: func(w http.ResponseWriter, r *http.Request) {
@@ -449,4 +551,3 @@ func TestWebsitesClient_GetGatewayWebsiteStatus_Success(t *testing.T) {
 	require.Equal(t, "active", status.Status)
 	require.Equal(t, false, status.IsBroken)
 }
-
